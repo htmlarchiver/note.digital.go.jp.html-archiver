@@ -1,0 +1,54 @@
+name: update-docs
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '10 */2 * * *'
+
+jobs:
+  update-docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: main
+
+    - name: put main sha
+      id: put_main_sha
+      run: |
+        SHA=`git rev-parse main`
+        echo ::set-output name=sha::$SHA
+
+    - uses: ruby/setup-ruby@v1
+      with:
+        bundler-cache: true
+
+    - name: bundle exec ruby script.rb
+      env:
+        CRAWLER_USER_AGENT: ${{ secrets.CRAWLER_USER_AGENT }}
+      run: bundle exec ruby script.rb
+
+    - run: mv docs /tmp
+    - run: mv CNAME /tmp
+
+    - uses: actions/checkout@v2
+      with:
+        ref: gh-pages
+
+    - run: rm -rf docs
+    - run: mv /tmp/docs .
+    - run: mv /tmp/CNAME docs/CNAME
+
+    - name: push
+      env:
+        GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+        SHA: '${{ steps.put_main_sha.outputs.sha }}'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        DATE=`date`
+        git add docs
+        git commit -m "update: $DATE main: $SHA"
+        git push origin gh-pages:gh-pages

@@ -11,7 +11,7 @@ class Unexpected < StandardError; end
 DOMAIN      = 'https://note.digital.go.jp'
 SITEMAP_URL = "#{DOMAIN}/sitemap.xml.gz"
 TARGET      = 'docs'
-USER_AGENT  = ENV.fetch('CRAWLER_USER_AGENT')
+USER_AGENT  = 'AdIdxBot'
 
 sio  = OpenURI.open_uri(SITEMAP_URL)
 gz   = Zlib::GzipReader.new(sio)
